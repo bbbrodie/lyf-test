@@ -271,6 +271,7 @@
         </div>
     </div>
     <div class="form-container">
+        <div id="plan-summary" style="margin-bottom: 20px; font-weight: bold;"></div> <!-- Added for plan display -->
         <div class="payment-options">
             <div class="payment-option selected" data-type="pay-now">Pay Now</div>
             <div class="payment-option unselected" data-type="pay-in-club">Pay In Club</div>
@@ -346,6 +347,16 @@
         document.getElementById('hidden-emergencyPhone').value = params.get('emergencyPhone') || '';
 
         document.querySelector('.previous').href = `details.html?location=${encodeURIComponent(gymLocation || '')}&plan=${encodeURIComponent(plan || '')}`;
+
+        // Display the selected plan summary
+        const planSummary = document.getElementById('plan-summary');
+        if (plan === 'no-contract') {
+            planSummary.textContent = 'Selected Plan: Freedom - No Strings ($21 per week, billed fortnightly)';
+        } else if (plan === 'loyalty-12-months') {
+            planSummary.textContent = 'Selected Plan: Loyalty - 12 months ($6 for 6 weeks, then $19 per week)';
+        } else {
+            planSummary.textContent = 'Selected Plan: Unknown';
+        }
 
         async function initStripePayment() {
             const name = `${document.getElementById('hidden-firstName').value} ${document.getElementById('hidden-lastName').value}`.trim();
@@ -503,10 +514,11 @@
                     return;
                 }
 
-                // Note: Add your plan-to-priceId mapping here
+                // Updated plan-to-priceId mapping
                 const planToPriceId = {
                     'basic': 'price_1RmBy88A2e4dDvfp6XCK0JPr',
-                    'no-contract': 'price_1RmBy88A2e4dDvfp6XCK0JPr'
+                    'no-contract': 'price_1RmBy88A2e4dDvfp6XCK0JPr',
+                    'loyalty-12-months': 'price_1ExampleLoyaltyPriceID' // Replace with actual Stripe price ID for loyalty plan
                 };
                 const priceId = planToPriceId[document.getElementById('hidden-plan').value] || 'price_1RmBy88A2e4dDvfp6XCK0JPr'; // Fallback to hardcoded
 
