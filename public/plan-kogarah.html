@@ -80,8 +80,9 @@
             background-color: #111;
             padding: 30px;
             border-radius: 10px;
-            width: 400px;
+            width: 90%; /* Mobile-first: full width */
             text-align: left;
+            max-width: 400px; /* Limit on larger screens */
         }
 
         .current-plan {
@@ -105,7 +106,7 @@
             list-style: none;
             padding: 0;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr; /* Mobile-first: single column */
         }
 
         .inclusions li {
@@ -126,15 +127,10 @@
             color: #fff;
         }
 
-        .better-deal {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin: 20px 0 10px;
-        }
-
         .options {
             display: flex;
             gap: 10px;
+            flex-direction: column; /* Mobile-first: stack vertically */
         }
 
         .option {
@@ -142,6 +138,7 @@
             padding: 15px;
             border-radius: 10px;
             cursor: pointer;
+            width: 100%; /* Widen to fill container */
         }
 
         .option input {
@@ -196,6 +193,8 @@
             justify-content: space-between;
             align-items: center;
             margin-top: 30px;
+            flex-direction: column; /* Mobile-first: stack */
+            gap: 10px;
         }
 
         .previous {
@@ -243,6 +242,42 @@
             text-decoration: none;
             margin: 0 5px;
         }
+
+        /* Responsive Media Queries (detect screen size) */
+        @media (min-width: 600px) { /* Tablets and up */
+            .form-container {
+                width: 400px; /* Fixed width for larger screens */
+            }
+
+            .inclusions {
+                grid-template-columns: 1fr 1fr; /* Two columns on larger screens */
+            }
+
+            .navigation {
+                flex-direction: row; /* Horizontal buttons */
+                gap: 0;
+            }
+
+            .title {
+                font-size: 2.5em; /* Larger title */
+            }
+
+            .steps {
+                flex-wrap: nowrap; /* Keep steps in one line */
+            }
+        }
+
+        @media (max-width: 599px) { /* Mobile tweaks */
+            .option, button, a {
+                padding: 12px 20px; /* Touch-friendly size */
+                font-size: 1.1em; /* Larger text for readability */
+            }
+
+            .steps {
+                flex-wrap: wrap; /* Wrap steps on very small screens */
+                gap: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -274,7 +309,6 @@
             <li><span>Free Parking</span></li>
             <li><span>Free Wifi</span></li>
         </ul>
-        <div class="better-deal">NEED A BETTER DEAL?</div>
         <div class="options">
             <div class="option selected">
                 <input type="radio" id="no-contract" name="plan" checked>
@@ -282,16 +316,6 @@
                     <div class="checkbox"></div>
                     <div>
                         <div class="option-title">No Contract</div>
-                        <div class="option-price">$18.95/week</div>
-                    </div>
-                </label>
-            </div>
-            <div class="option unselected">
-                <input type="radio" id="6-months" name="plan">
-                <label for="6-months">
-                    <div class="checkbox"></div>
-                    <div>
-                        <div class="option-title">6 months Plan</div>
                         <div class="option-price">$18.95/week</div>
                     </div>
                 </label>
@@ -312,19 +336,6 @@
     <script>
         // Hardcode location for stability
         const gymLocation = 'kogarah';
-
-        // Update option selection
-        document.querySelectorAll('.option').forEach(option => {
-            option.addEventListener('click', function() {
-                document.querySelectorAll('.option').forEach(opt => {
-                    opt.classList.remove('selected');
-                    opt.classList.add('unselected');
-                });
-                this.classList.add('selected');
-                this.classList.remove('unselected');
-                this.querySelector('input').checked = true;
-            });
-        });
 
         // Next button functionality
         document.querySelector('.next').addEventListener('click', function() {

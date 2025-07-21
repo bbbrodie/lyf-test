@@ -80,8 +80,9 @@
             background-color: #111;
             padding: 30px;
             border-radius: 10px;
-            width: 400px;
+            width: 90%; /* Mobile-first: full width */
             text-align: left;
+            max-width: 400px; /* Limit on larger screens */
         }
 
         .section-title {
@@ -118,6 +119,7 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            flex-direction: column; /* Mobile-first: stack vertically */
         }
 
         .payment-option {
@@ -138,6 +140,7 @@
         .form-row {
             display: flex;
             gap: 10px;
+            flex-direction: column; /* Mobile-first: stack vertically */
         }
 
         .form-row > div {
@@ -149,6 +152,8 @@
             justify-content: space-between;
             align-items: center;
             margin-top: 30px;
+            flex-direction: column; /* Mobile-first: stack */
+            gap: 10px;
         }
 
         .previous {
@@ -203,6 +208,46 @@
             color: #888;
             text-decoration: none;
             margin: 0 5px;
+        }
+
+        /* Responsive Media Queries (detect screen size) */
+        @media (min-width: 600px) { /* Tablets and up */
+            .form-container {
+                width: 400px; /* Fixed width for larger screens */
+            }
+
+            .payment-options {
+                flex-direction: row; /* Horizontal on larger screens */
+            }
+
+            .form-row {
+                flex-direction: row; /* Horizontal on larger screens */
+            }
+
+            .navigation {
+                flex-direction: row; /* Horizontal buttons */
+                gap: 0;
+            }
+
+            .title {
+                font-size: 2.5em; /* Larger title */
+            }
+
+            .steps {
+                flex-wrap: nowrap; /* Keep steps in one line */
+            }
+        }
+
+        @media (max-width: 599px) { /* Mobile tweaks */
+            input, button, a {
+                padding: 12px 20px; /* Touch-friendly size */
+                font-size: 1.1em; /* Larger text for readability */
+            }
+
+            .steps {
+                flex-wrap: wrap; /* Wrap steps on very small screens */
+                gap: 15px;
+            }
         }
     </style>
 </head>
@@ -281,12 +326,12 @@
 
         // Parse params and set hidden fields first
         const params = new URLSearchParams(window.location.search);
-const gymLocation = params.get('location');
-const normalizedLocation = gymLocation ? gymLocation.toLowerCase().replace(/-/g, '') : '';
-const plan = params.get('plan');
+        const gymLocation = params.get('location');
+        const normalizedLocation = gymLocation ? gymLocation.toLowerCase().replace(/-/g, '') : '';
+        const plan = params.get('plan');
 
-document.getElementById('hidden-location').value = normalizedLocation || '';
-document.getElementById('hidden-plan').value = plan || '';
+        document.getElementById('hidden-location').value = normalizedLocation || '';
+        document.getElementById('hidden-plan').value = plan || '';
         document.getElementById('hidden-firstName').value = params.get('firstName') || '';
         document.getElementById('hidden-lastName').value = params.get('lastName') || '';
         document.getElementById('hidden-dob').value = params.get('dob') || '';
@@ -302,35 +347,35 @@ document.getElementById('hidden-plan').value = plan || '';
 
         document.querySelector('.previous').href = `details.html?location=${encodeURIComponent(gymLocation || '')}&plan=${encodeURIComponent(plan || '')}`;
 
-async function initStripePayment() {
-  const name = `${document.getElementById('hidden-firstName').value} ${document.getElementById('hidden-lastName').value}`.trim();
-  const email = document.getElementById('hidden-email').value;
-  const addressLine1 = document.getElementById('hidden-address').value;
-  const city = document.getElementById('hidden-city').value;
-  const state = document.getElementById('hidden-state').value;
-  const postcode = document.getElementById('hidden-postcode').value;
+        async function initStripePayment() {
+            const name = `${document.getElementById('hidden-firstName').value} ${document.getElementById('hidden-lastName').value}`.trim();
+            const email = document.getElementById('hidden-email').value;
+            const addressLine1 = document.getElementById('hidden-address').value;
+            const city = document.getElementById('hidden-city').value;
+            const state = document.getElementById('hidden-state').value;
+            const postcode = document.getElementById('hidden-postcode').value;
 
-  if (!name || !email || !addressLine1 || !city || !state || !postcode) {
-    document.getElementById('payment-message').textContent = 'Missing required details from previous steps (name, email, or address).';
-    document.querySelector('.submit').disabled = true;
-    return;
-  }
+            if (!name || !email || !addressLine1 || !city || !state || !postcode) {
+                document.getElementById('payment-message').textContent = 'Missing required details from previous steps (name, email, or address).';
+                document.querySelector('.submit').disabled = true;
+                return;
+            }
 
-  const response = await fetch('https://lyf-test-1.onrender.com/create-setup-intent', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: name,
-      email: email,
-      address: {
-        line1: addressLine1,
-        city: city,
-        state: state,
-        postal_code: postcode,
-        country: 'AU'
-      }
-    })
-  });
+            const response = await fetch('https://lyf-test-1.onrender.com/create-setup-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    address: {
+                        line1: addressLine1,
+                        city: city,
+                        state: state,
+                        postal_code: postcode,
+                        country: 'AU'
+                    }
+                })
+            });
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -455,7 +500,7 @@ async function initStripePayment() {
                 };
                 const priceId = planToPriceId[document.getElementById('hidden-plan').value] || 'price_1RmBy88A2e4dDvfp6XCK0JPr'; // Fallback to hardcoded
 
-                const response = await fetch('https://lyf-test.onrender.com/create-subscription-final', {
+                const response = await fetch('https://lyf-test-1.onrender.com/create-subscription-final', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
