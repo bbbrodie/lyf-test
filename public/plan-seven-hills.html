@@ -127,23 +127,17 @@
             color: #fff;
         }
 
-        .better-deal {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin: 20px 0 10px;
-        }
-
         .options {
             display: flex;
-            gap: 10px;
             flex-direction: column; /* Mobile-first: stack vertically */
         }
 
         .option {
-            flex: 1;
+            width: 100%; /* Full width to fill container */
             padding: 15px;
             border-radius: 10px;
-            cursor: pointer;
+            background-color: rgb(227, 25, 54); /* Preselected style */
+            color: #fff;
         }
 
         .option input {
@@ -153,7 +147,7 @@
         .option label {
             display: flex;
             align-items: center;
-            cursor: pointer;
+            cursor: default; /* No cursor change since preselected */
         }
 
         .checkbox {
@@ -172,16 +166,6 @@
         .option input:checked + label .checkbox::before {
             content: '✓';
             color: #000;
-        }
-
-        .option.selected {
-            background-color: rgb(227, 25, 54);
-            color: #fff;
-        }
-
-        .option.unselected {
-            background-color: #222;
-            color: #fff;
         }
 
         .option-title {
@@ -258,10 +242,6 @@
                 grid-template-columns: 1fr 1fr; /* Two columns on larger screens */
             }
 
-            .options {
-                flex-direction: row; /* Horizontal on larger screens */
-            }
-
             .navigation {
                 flex-direction: row; /* Horizontal buttons */
                 gap: 0;
@@ -318,7 +298,6 @@
             <li><span>Free Parking</span></li>
             <li><span>Free Wifi</span></li>
         </ul>
-        <div class="better-deal">NEED A BETTER DEAL?</div>
         <div class="options">
             <div class="option selected">
                 <input type="radio" id="no-contract" name="plan" checked>
@@ -326,16 +305,6 @@
                     <div class="checkbox"></div>
                     <div>
                         <div class="option-title">No Contract</div>
-                        <div class="option-price">$18.95/week</div>
-                    </div>
-                </label>
-            </div>
-            <div class="option unselected">
-                <input type="radio" id="6-months" name="plan">
-                <label for="6-months">
-                    <div class="checkbox"></div>
-                    <div>
-                        <div class="option-title">6 months Plan</div>
                         <div class="option-price">$18.95/week</div>
                     </div>
                 </label>
@@ -356,19 +325,6 @@
     <script>
         // Hardcode location for stability
         const gymLocation = 'seven-hills';
-
-        // Update option selection
-        document.querySelectorAll('.option').forEach(option => {
-            option.addEventListener('click', function() {
-                document.querySelectorAll('.option').forEach(opt => {
-                    opt.classList.remove('selected');
-                    opt.classList.add('unselected');
-                });
-                this.classList.add('selected');
-                this.classList.remove('unselected');
-                this.querySelector('input').checked = true;
-            });
-        });
 
         // Next button functionality
         document.querySelector('.next').addEventListener('click', function() {
