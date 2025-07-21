@@ -483,6 +483,16 @@
                                     postal_code: document.getElementById('hidden-postcode').value
                                 }
                             }
+                        },
+                        mandate_data: {
+                            customer_acceptance: {
+                                type: 'online',
+                                accepted_at: Math.floor(Date.now() / 1000),
+                                online: {
+                                    ip_address: '127.0.0.1', // Placeholder; can get from backend if needed
+                                    user_agent: navigator.userAgent
+                                }
+                            }
                         }
                     },
                     redirect: 'if_required'
@@ -505,7 +515,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         customerId: payNowCustomerId,
-                        setupIntentId: setupIntent.id
+                        setupIntentId: setupIntent.id,
+                        priceId: priceId // Add priceId to body
                     })
                 });
 
@@ -518,29 +529,6 @@
                 window.location.href = successUrl;
             } else {
                 window.location.href = successUrl;
-            }
-        });
-
-        // Optional JS detection for advanced mobile optimizations (e.g., adjust Stripe element)
-        function isMobile() {
-            return window.matchMedia("(max-width: 599px)").matches;
-        }
-
-        if (isMobile()) {
-            document.body.classList.add('mobile');
-            // Example: Add larger padding for touch inputs
-            document.querySelectorAll('input').forEach(el => {
-                el.style.padding = '15px';
-            });
-            // Adjust Stripe Payment Element for mobile if needed (e.g., via appearance options)
-        }
-
-        // Listen for resize events to re-apply if needed
-        window.addEventListener('resize', () => {
-            if (isMobile()) {
-                document.body.classList.add('mobile');
-            } else {
-                document.body.classList.remove('mobile');
             }
         });
     </script>
