@@ -112,20 +112,24 @@
             formattedLocation = gymLocation.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
         }
 
-        // Format plan (e.g., 'no-contract' -> 'No Contract')
-        let formattedPlan = '';
-        if (plan && typeof plan === 'string' && plan !== '') {
-            formattedPlan = plan.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        // Map plan to display name
+        let planDisplayName = '';
+        if (plan === 'no-contract') {
+            planDisplayName = 'Freedom - No Strings';
+        } else if (plan === 'loyalty-12-months') {
+            planDisplayName = 'Loyalty - 12 months';
+        } else {
+            planDisplayName = 'Unknown Plan';
         }
 
         // Update success message
         const messageElement = document.getElementById('success-message');
-        if (formattedLocation && formattedPlan) {
-            messageElement.textContent = `Thank you for joining Lyf 24/7 at ${formattedLocation} with the ${formattedPlan} plan!`;
+        if (formattedLocation && planDisplayName) {
+            messageElement.textContent = `Thank you for joining Lyf 24/7 at ${formattedLocation} with the ${planDisplayName} plan!`;
         } else if (formattedLocation) {
             messageElement.textContent = `Thank you for joining Lyf 24/7 at ${formattedLocation}!`;
-        } else if (formattedPlan) {
-            messageElement.textContent = `Thank you for joining Lyf 24/7 with the ${formattedPlan} plan!`;
+        } else if (planDisplayName) {
+            messageElement.textContent = `Thank you for joining Lyf 24/7 with the ${planDisplayName} plan!`;
         }
     </script>
 </body>
