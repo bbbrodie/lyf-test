@@ -281,12 +281,12 @@
 
         // Parse params and set hidden fields first
         const params = new URLSearchParams(window.location.search);
-        const gymLocation = params.get('location');
-        const normalizedLocation = gymLocation ? gymLocation.toLowerCase().replace(/-/g, '') : '';
-        const plan = params.get('plan');
+const gymLocation = params.get('location');
+const normalizedLocation = gymLocation ? gymLocation.toLowerCase().replace(/-/g, '') : '';
+const plan = params.get('plan');
 
-        document.getElementById('hidden-location').value = normalizedLocation || '';
-        document.getElementById('hidden-plan').value = plan || '';
+document.getElementById('hidden-location').value = normalizedLocation || '';
+document.getElementById('hidden-plan').value = plan || '';
         document.getElementById('hidden-firstName').value = params.get('firstName') || '';
         document.getElementById('hidden-lastName').value = params.get('lastName') || '';
         document.getElementById('hidden-dob').value = params.get('dob') || '';
@@ -302,35 +302,35 @@
 
         document.querySelector('.previous').href = `details.html?location=${encodeURIComponent(gymLocation || '')}&plan=${encodeURIComponent(plan || '')}`;
 
-        async function initStripePayment() {
-            const name = `${document.getElementById('hidden-firstName').value} ${document.getElementById('hidden-lastName').value}`.trim();
-            const email = document.getElementById('hidden-email').value;
-            const addressLine1 = document.getElementById('hidden-address').value;
-            const city = document.getElementById('hidden-city').value;
-            const state = document.getElementById('hidden-state').value;
-            const postcode = document.getElementById('hidden-postcode').value;
+async function initStripePayment() {
+  const name = `${document.getElementById('hidden-firstName').value} ${document.getElementById('hidden-lastName').value}`.trim();
+  const email = document.getElementById('hidden-email').value;
+  const addressLine1 = document.getElementById('hidden-address').value;
+  const city = document.getElementById('hidden-city').value;
+  const state = document.getElementById('hidden-state').value;
+  const postcode = document.getElementById('hidden-postcode').value;
 
-            if (!name || !email || !addressLine1 || !city || !state || !postcode) {
-                document.getElementById('payment-message').textContent = 'Missing required details from previous steps (name, email, or address).';
-                document.querySelector('.submit').disabled = true;
-                return;
-            }
+  if (!name || !email || !addressLine1 || !city || !state || !postcode) {
+    document.getElementById('payment-message').textContent = 'Missing required details from previous steps (name, email, or address).';
+    document.querySelector('.submit').disabled = true;
+    return;
+  }
 
-            const response = await fetch('https://lyf-test-1.onrender.com/create-setup-intent', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: name,
-                    email: email,
-                    address: {
-                        line1: addressLine1,
-                        city: city,
-                        state: state,
-                        postal_code: postcode,
-                        country: 'AU'
-                    }
-                })
-            });
+  const response = await fetch('https://lyf-test-1.onrender.com/create-setup-intent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: name,
+      email: email,
+      address: {
+        line1: addressLine1,
+        city: city,
+        state: state,
+        postal_code: postcode,
+        country: 'AU'
+      }
+    })
+  });
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -455,7 +455,7 @@
                 };
                 const priceId = planToPriceId[document.getElementById('hidden-plan').value] || 'price_1RmBy88A2e4dDvfp6XCK0JPr'; // Fallback to hardcoded
 
-                const response = await fetch('https://lyf-test-1.onrender.com/create-subscription-final', {
+                const response = await fetch('https://lyf-test.onrender.com/create-subscription-final', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
