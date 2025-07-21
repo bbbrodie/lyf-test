@@ -5,6 +5,8 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+console.log('Server initialized with /send-details-email POST endpoint');
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -12,27 +14,22 @@ app.post('/create-setup-intent', async (req, res) => {
   try {
     const { name, email, address } = req.body;
 
-    // Log received data for debugging
     console.log('Received customer data:', { name, email, address });
 
-    // Validate required fields
     if (!name || !email || !address || !address.country) {
       const errorMsg = 'Missing required customer details: name, email, or address';
       console.error(errorMsg);
       return res.status(400).json({ error: errorMsg });
     }
 
-    // Create Stripe customer with name, email, and address
     const customer = await stripe.customers.create({
       name: name,
       email: email,
       address: address
     });
 
-    // Log created customer for debugging
     console.log('Created Stripe customer:', customer);
 
-    // Create SetupIntent for the customer
     const setupIntent = await stripe.setupIntents.create({
       customer: customer.id,
       payment_method_types: ['au_becs_debit', 'card']
@@ -78,6 +75,7 @@ app.post('/create-subscription-final', async (req, res) => {
 });
 
 app.post('/send-details-email', async (req, res) => {
+  console.log('Received POST to /send-details-email with body:', req.body);
   try {
     const {
       location,
@@ -96,40 +94,42 @@ app.post('/send-details-email', async (req, res) => {
       emergencyPhone
     } = req.body;
 
-    // Validate required fields (mirror client-side validation)
     if (!location || !plan || !firstName || !lastName || !dob || !phone || !email || !address || !state || !city || !postcode) {
       return res.status(400).json({ error: 'Missing required details' });
     }
 
-    // Mapping of locations to emails
+    // Normalize location to match mapping keys (e.g., 'seven-hills' -> 'sevenhills')
+    const normalizedLocation = location.toLowerCase().replace(/-/g, '');
+
     const locationEmails = {
       'northsydney': 'northsydney@lyf247.com.au',
       'figtree': 'figtree@lyf247.com.au',
       'sevenhills': 'sevenhills@lyf247.com.au',
       'kogarah': 'kogarah@lyf247.com.au'
-      // Add more locations here as needed
     };
 
-    const toEmail = locationEmails[location] || 'brodie@lyf247.com.au'; // Fallback to your email if location not found
+    const toEmail = locationEmails[normalizedLocation] || 'brodie@lyf247.com.au';
+    console.log(`Selected email: ${toEmail} for normalized location: ${normalizedLocation}`);
 
-    // Set up Nodemailer transporter using env vars
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_PORT === '465', // true for SSL (port 465), false for TLS (port 587)
+      secure: process.env.SMTP_PORT === '465',
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
       }
     });
 
-    // Email options
+    await transporter.verify();
+    console.log('SMTP connection verified');
+
     const mailOptions = {
       from: process.env.EMAIL_FROM || process.env.SMTP_USER,
       to: toEmail,
-      cc: 'brodie@lyf247.com.au', // CC to you for all emails
-      subject: `New Membership Details Submitted for ${plan} at ${location}`,
-      text: `A new user has submitted their details for a ${plan} membership at ${location}.
+      cc: 'brodie@lyf247.com.au',
+      subject: `New Membership Details Submitted for ${plan} at ${normalizedLocation}`,
+      text: `A new user has submitted their details for a ${plan} membership at ${normalizedLocation}.
 
 Personal Information:
 - Name: ${firstName} ${lastName}
@@ -145,14 +145,35 @@ Emergency Contact:
 Note: This is before payment processing. The user is being redirected to the payment page.`
     };
 
-    // Send email
     await transporter.sendMail(mailOptions);
-    console.log(`Email sent to ${toEmail} (CC: brodie@lyf247.com.au) for location ${location}`);
+    console.log(`Email sent to ${toEmail} (CC: brodie@lyf247.com.au) for location ${normalizedLocation}`);
 
     res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error in /send-details-email:', error);
-    res.status(500).json({ error: 'Failed to send email' });
+    res.status(500).json({ error: 'Failed to send email: ' + error.message });
+  }
+});
+
+app.get('/test-email', async (req, res) => {
+  console.log('Test-email endpoint hit');
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_PORT === '465',
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+    });
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+      to: 'brodie@lyf247.com.au',
+      subject: 'Test Email',
+      text: 'This is a test email from your Render service.'
+    });
+    res.send('Test email sent successfully');
+  } catch (error) {
+    console.error('SMTP Test Error:', error);
+    res.send('Error sending test email: ' + error.message);
   }
 });
 
