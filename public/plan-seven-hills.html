@@ -80,8 +80,9 @@
             background-color: #111;
             padding: 30px;
             border-radius: 10px;
-            width: 400px;
+            width: 90%; /* Mobile-first: full width */
             text-align: left;
+            max-width: 400px; /* Limit on larger screens */
         }
 
         .current-plan {
@@ -105,7 +106,7 @@
             list-style: none;
             padding: 0;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr; /* Mobile-first: single column */
         }
 
         .inclusions li {
@@ -135,6 +136,7 @@
         .options {
             display: flex;
             gap: 10px;
+            flex-direction: column; /* Mobile-first: stack vertically */
         }
 
         .option {
@@ -196,6 +198,8 @@
             justify-content: space-between;
             align-items: center;
             margin-top: 30px;
+            flex-direction: column; /* Mobile-first: stack */
+            gap: 10px;
         }
 
         .previous {
@@ -242,6 +246,46 @@
             color: #888;
             text-decoration: none;
             margin: 0 5px;
+        }
+
+        /* Responsive Media Queries (detect screen size) */
+        @media (min-width: 600px) { /* Tablets and up */
+            .form-container {
+                width: 400px; /* Fixed width for larger screens */
+            }
+
+            .inclusions {
+                grid-template-columns: 1fr 1fr; /* Two columns on larger screens */
+            }
+
+            .options {
+                flex-direction: row; /* Horizontal on larger screens */
+            }
+
+            .navigation {
+                flex-direction: row; /* Horizontal buttons */
+                gap: 0;
+            }
+
+            .title {
+                font-size: 2.5em; /* Larger title */
+            }
+
+            .steps {
+                flex-wrap: nowrap; /* Keep steps in one line */
+            }
+        }
+
+        @media (max-width: 599px) { /* Mobile tweaks */
+            .option, button, a {
+                padding: 12px 20px; /* Touch-friendly size */
+                font-size: 1.1em; /* Larger text for readability */
+            }
+
+            .steps {
+                flex-wrap: wrap; /* Wrap steps on very small screens */
+                gap: 15px;
+            }
         }
     </style>
 </head>

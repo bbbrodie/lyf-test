@@ -80,8 +80,9 @@
             background-color: #111;
             padding: 30px;
             border-radius: 10px;
-            width: 300px;
+            width: 90%; /* Mobile-first: full width */
             text-align: left;
+            max-width: 300px; /* Limit on larger screens */
         }
 
         label {
@@ -143,6 +144,37 @@
             color: #888;
             text-decoration: none;
             margin: 0 5px;
+        }
+
+        /* Responsive Media Queries (detect screen size) */
+        @media (min-width: 600px) { /* Tablets and up */
+            .form-container {
+                width: 300px; /* Fixed width for larger screens */
+            }
+
+            .title {
+                font-size: 2.5em; /* Larger title */
+            }
+
+            .steps {
+                flex-wrap: nowrap; /* Keep steps in one line */
+            }
+        }
+
+        @media (max-width: 599px) { /* Mobile tweaks */
+            select {
+                padding: 12px; /* Larger padding for touch */
+                font-size: 1.1em; /* Larger text for readability */
+            }
+
+            button {
+                padding: 12px 20px; /* Touch-friendly size */
+            }
+
+            .steps {
+                flex-wrap: wrap; /* Wrap steps on very small screens */
+                gap: 15px;
+            }
         }
     </style>
 </head>
