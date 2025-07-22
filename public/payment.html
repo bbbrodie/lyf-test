@@ -522,7 +522,7 @@
                 };
                 const priceId = planToPriceId[document.getElementById('hidden-plan').value] || 'price_1RmBy88A2e4dDvfp6XCK0JPr'; // Fallback to hardcoded
 
-                const response = await fetch('https://lyf-test-1.onrender.com/create-subscription-final', {
+                const response = await fetch('/create-subscription-final', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
