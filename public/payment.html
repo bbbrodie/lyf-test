@@ -322,8 +322,8 @@
 
         let elements;
         let paymentElement;
-        let payNowClientSecret;
-        let payNowCustomerId;
+        let setupClientSecret;
+        let setupCustomerId;
 
         // Parse params and set hidden fields first
         const params = new URLSearchParams(window.location.search);
@@ -396,8 +396,8 @@
             }
 
             const data = await response.json();
-            payNowClientSecret = data.clientSecret;
-            payNowCustomerId = data.customerId;
+            setupClientSecret = data.clientSecret;
+            setupCustomerId = data.customerId;
 
             const appearance = {
                 theme: 'flat',
@@ -428,7 +428,7 @@
                 }
             };
 
-            elements = stripe.elements({ appearance, clientSecret: payNowClientSecret });
+            elements = stripe.elements({ appearance, clientSecret: setupClientSecret });
             paymentElement = elements.create('payment', {
                 layout: 'tabs',
                 fields: {
@@ -514,21 +514,34 @@
                     return;
                 }
 
-                // Updated plan-to-priceId mapping
-                const planToPriceId = {
-                    'basic': 'price_1Ra8rhGPVHY9A9BIdVGKOUFP',
-                    'no-contract': 'price_1Ra8rhGPVHY9A9BIdVGKOUFP',
-                    'loyalty-12-months': 'price_1RnDVLGPVHY9A9BIzfIyuvKt'
+                // Plan mappings
+                const planMappings = {
+                    'no-contract': {
+                        recurringPriceId: 'price_1Ra8rhGPVHY9A9BIdVGKOUFP',
+                       // oneTimePriceId: 'price_1RnVfX8A2e4dDvfpvVPXR5Zw',
+                        trialDays: 0
+                    },
+                    'loyalty-12-months': {
+                        recurringPriceId: 'price_1RnDVhGPVHY9A9BIpyhBV1vZ',
+                        oneTimePriceId: 'price_1Rkg9iGPVHY9A9BIT6LssxQG',
+                        trialDays: 42  // 6 weeks
+                    }
                 };
-                const priceId = planToPriceId[document.getElementById('hidden-plan').value] || 'price_1RmBy88A2e4dDvfp6XCK0JPr'; // Fallback to hardcoded
+                const selectedMapping = planMappings[document.getElementById('hidden-plan').value] || {
+                    recurringPriceId: 'price_1Ra8rhGPVHY9A9BIdVGKOUFP', // Fallback recurring
+                    oneTimePriceId: 'price_1Ra8ttGPVHY9A9BIG3RcDEse', // Fallback one-time
+                    trialDays: 0
+                };
 
                 const response = await fetch('/create-subscription-final', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        customerId: payNowCustomerId,
+                        customerId: setupCustomerId,
                         setupIntentId: setupIntent.id,
-                        priceId: priceId // Add priceId to body
+                        priceId: selectedMapping.recurringPriceId,
+                        oneTimePriceId: selectedMapping.oneTimePriceId,
+                        trialDays: selectedMapping.trialDays
                     })
                 });
 
