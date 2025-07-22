@@ -5,30 +5,27 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-console.log('Server initialized with /send-details-email POST endpoint');
-
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/create-setup-intent', async (req, res) => {
   try {
     const { name, email, address } = req.body;
-
     console.log('Received customer data:', { name, email, address });
 
-    if (!name || !email || !address || !address.country) {
-      const errorMsg = 'Missing required customer details: name, email, or address';
+    if (!name || !email || !address || !address.line1 || !address.city || !address.state || !address.postal_code || !address.country) {
+      const errorMsg = 'Missing required customer details: name, email, or full address';
       console.error(errorMsg);
       return res.status(400).json({ error: errorMsg });
     }
 
     const customer = await stripe.customers.create({
-      name: name,
-      email: email,
-      address: address
+      name,
+      email,
+      address
     });
 
-    console.log('Created Stripe customer:', customer);
+    console.log('Created Stripe customer:', customer.id);
 
     const setupIntent = await stripe.setupIntents.create({
       customer: customer.id,
@@ -40,7 +37,7 @@ app.post('/create-setup-intent', async (req, res) => {
       customerId: customer.id
     });
   } catch (error) {
-    console.error('Error in /create-setup-intent:', error);
+    console.error('Error in /create-setup-intent:', error.message);
     res.status(400).json({ error: error.message });
   }
 });
@@ -53,27 +50,36 @@ app.post('/create-subscription-final', async (req, res) => {
       return res.status(400).json({ error: 'Missing customerId, setupIntentId, or priceId' });
     }
 
-    const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
-    const paymentMethod = setupIntent.payment_method;
+    // Validate oneTimePriceId if provided
+    if (oneTimePriceId) {
+      const price = await stripe.prices.retrieve(oneTimePriceId);
+      if (price.recurring) {
+        return res.status(400).json({ error: 'oneTimePriceId must be a one-time price' });
+      }
+    }
 
+    const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+    if (setupIntent.status !== 'succeeded') {
+      return res.status(400).json({ error: 'SetupIntent not succeeded' });
+    }
+
+    const paymentMethod = setupIntent.payment_method;
     await stripe.paymentMethods.attach(paymentMethod, { customer: customerId });
     await stripe.customers.update(customerId, {
       invoice_settings: { default_payment_method: paymentMethod }
     });
 
-    const addInvoiceItems = oneTimePriceId ? [{ price: oneTimePriceId }] : [];
-
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: priceId }],
-      add_invoice_items: addInvoiceItems,
+      add_invoice_items: oneTimePriceId ? [{ price: oneTimePriceId }] : [],
       trial_period_days: trialDays || 0,
       expand: ['latest_invoice.payment_intent']
     });
 
     res.json({ subscriptionId: subscription.id });
   } catch (error) {
-    console.error('Error in /create-subscription-final:', error);
+    console.error('Error in /create-subscription-final:', error.message);
     res.status(400).json({ error: error.message });
   }
 });
