@@ -1,31 +1,80 @@
 const express = require('express');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Stripe = require('stripe'); // Changed to capital S for dynamic init
 const nodemailer = require('nodemailer');
 const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+console.log('Server initialized with /send-details-email POST endpoint');
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Location to key mapping (using your preferred env var codes)
+const locationKeyMap = {
+  'northsydney': {
+    secret: process.env.STRIPE_SECRET_NS,
+    pub: process.env.STRIPE_PUB_NS
+  },
+  'figtree': {
+    secret: process.env.STRIPE_SECRET_FT,
+    pub: process.env.STRIPE_PUB_FT
+  },
+  'sevenhills': {
+    secret: process.env.STRIPE_SECRET_SH,
+    pub: process.env.STRIPE_PUB_SH
+  },
+  'kogarah': {
+    secret: process.env.STRIPE_SECRET_KO,
+    pub: process.env.STRIPE_PUB_KO
+  }
+};
+
+// New endpoint to get publishable key for frontend
+app.get('/get-pub-key', (req, res) => {
+  const location = req.query.location?.toLowerCase(); // Normalize if needed
+  const keys = locationKeyMap[location];
+  if (!keys || !keys.pub) {
+    return res.status(400).json({ error: 'Invalid or missing location for publishable key' });
+  }
+  res.json({ publishableKey: keys.pub });
+});
+
 app.post('/create-setup-intent', async (req, res) => {
   try {
-    const { name, email, address } = req.body;
-    console.log('Received customer data:', { name, email, address });
+    const { name, email, address, location } = req.body;
 
-    if (!name || !email || !address || !address.line1 || !address.city || !address.state || !address.postal_code || !address.country) {
-      const errorMsg = 'Missing required customer details: name, email, or full address';
+    console.log('Received customer data:', { name, email, address, location });
+
+    if (!location) {
+      const errorMsg = 'Missing location';
+      console.error(errorMsg);
+      return res.status(400).json({ error: errorMsg });
+    }
+
+    const normalizedLocation = location.toLowerCase().replace(/-/g, '');
+    const keys = locationKeyMap[normalizedLocation];
+    if (!keys || !keys.secret) {
+      const errorMsg = 'Invalid location for Stripe key';
+      console.error(errorMsg);
+      return res.status(400).json({ error: errorMsg });
+    }
+
+    const stripe = Stripe(keys.secret); // Dynamic init
+
+    if (!name || !email || !address || !address.country) {
+      const errorMsg = 'Missing required customer details: name, email, or address';
       console.error(errorMsg);
       return res.status(400).json({ error: errorMsg });
     }
 
     const customer = await stripe.customers.create({
-      name,
-      email,
-      address
+      name: name,
+      email: email,
+      address: address
     });
 
-    console.log('Created Stripe customer:', customer.id);
+    console.log('Created Stripe customer:', customer);
 
     const setupIntent = await stripe.setupIntents.create({
       customer: customer.id,
@@ -37,49 +86,50 @@ app.post('/create-setup-intent', async (req, res) => {
       customerId: customer.id
     });
   } catch (error) {
-    console.error('Error in /create-setup-intent:', error.message);
+    console.error('Error in /create-setup-intent:', error);
     res.status(400).json({ error: error.message });
   }
 });
 
 app.post('/create-subscription-final', async (req, res) => {
   try {
-    const { customerId, setupIntentId, priceId, oneTimePriceId, trialDays } = req.body;
+    const { customerId, setupIntentId, priceId, oneTimePriceId, trialDays, location } = req.body;
 
-    if (!customerId || !setupIntentId || !priceId) {
-      return res.status(400).json({ error: 'Missing customerId, setupIntentId, or priceId' });
+    if (!customerId || !setupIntentId || !priceId || !location) {
+      return res.status(400).json({ error: 'Missing customerId, setupIntentId, priceId, or location' });
     }
 
-    // Validate oneTimePriceId if provided
-    if (oneTimePriceId) {
-      const price = await stripe.prices.retrieve(oneTimePriceId);
-      if (price.recurring) {
-        return res.status(400).json({ error: 'oneTimePriceId must be a one-time price' });
-      }
+    const normalizedLocation = location.toLowerCase().replace(/-/g, '');
+    const keys = locationKeyMap[normalizedLocation];
+    if (!keys || !keys.secret) {
+      const errorMsg = 'Invalid location for Stripe key';
+      console.error(errorMsg);
+      return res.status(400).json({ error: errorMsg });
     }
+
+    const stripe = Stripe(keys.secret); // Dynamic init
 
     const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
-    if (setupIntent.status !== 'succeeded') {
-      return res.status(400).json({ error: 'SetupIntent not succeeded' });
-    }
-
     const paymentMethod = setupIntent.payment_method;
+
     await stripe.paymentMethods.attach(paymentMethod, { customer: customerId });
     await stripe.customers.update(customerId, {
       invoice_settings: { default_payment_method: paymentMethod }
     });
 
+    const addInvoiceItems = oneTimePriceId ? [{ price: oneTimePriceId }] : [];
+
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: priceId }],
-      add_invoice_items: oneTimePriceId ? [{ price: oneTimePriceId }] : [],
+      add_invoice_items: addInvoiceItems,
       trial_period_days: trialDays || 0,
       expand: ['latest_invoice.payment_intent']
     });
 
     res.json({ subscriptionId: subscription.id });
   } catch (error) {
-    console.error('Error in /create-subscription-final:', error.message);
+    console.error('Error in /create-subscription-final:', error);
     res.status(400).json({ error: error.message });
   }
 });
